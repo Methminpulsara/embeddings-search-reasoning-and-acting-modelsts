@@ -1,4 +1,5 @@
 # pip install -qU langchain-pinecone
+import os
 
 from langchain_pinecone import PineconeVectorStore
 from pinecone import Pinecone
@@ -64,8 +65,14 @@ vector_store = PineconeVectorStore(index_name="hr-pdf", embedding=embedding_mode
 # # In memory storage ekk create kara gnnnw
 vector_store.add_documents(documents=text_split)
 
-model = ChatOllama(
-    model="llama3.2:3b"
+OPENROUTER_KEY= os.getenv("OPENROUTER_KEY")
+OPENROUTER_URL= os.getenv("OPENROUTER_URL")
+
+# WADA KRNNE NTHTHM OPENROUTER API KEY EKA MAARU KARNN
+model = ChatOpenAI(
+    model="openai/gpt-oss-20b:free",
+    api_key=OPENROUTER_KEY,
+    base_url=OPENROUTER_URL
 )
 
 
@@ -116,12 +123,12 @@ def write_result_to_file(content: str, file_name: str = "query_result.txt"):
 
     """
 
-    try:
-        with open(file_name, "a") as f:
-            f.write(content)
-        return f"successfuly wrote content to filename - {file_name} "
-    except Exception as e:
-        print(e)
+    # try:
+    with open(file_name, "a") as f:
+        f.write(content)
+    return f"successfuly wrote content to filename - {file_name} "
+    # except Exception as e:
+    #
 
 
 @tool("content_and_artifact")
@@ -158,3 +165,6 @@ def query(req: Request):
                      anwser=resp["messages"][-1].content,
                      status="success"
                      )
+
+
+# FILE ek hadenne nththte MODEL eke performence madhi nisa api key ekk gnn onh ekh nisa mekt
