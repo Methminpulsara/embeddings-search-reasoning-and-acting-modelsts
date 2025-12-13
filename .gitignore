@@ -4,6 +4,7 @@ venv/
 
 # Environment variables
 .env
+./.env
 
 # PyCharm config
 .idea/
