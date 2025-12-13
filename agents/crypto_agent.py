@@ -7,7 +7,6 @@ from fastapi import FastAPI
 from langchain_classic.chains.llm import LLMChain
 from langchain_core.prompts import PromptTemplate
 from pydantic import BaseModel
-from fastapi.responses import JSONResponse
 from langchain_core.messages import HumanMessage
 
 
@@ -15,6 +14,9 @@ from langgraph.checkpoint.memory import InMemorySaver
 from langchain_ollama import ChatOllama
 from langchain.agents import create_agent
 from langchain_core.tools import  tool
+
+from langchain_google_genai import ChatGoogleGenerativeAI
+
 
 load_dotenv()
 
@@ -37,10 +39,9 @@ checkpointer = InMemorySaver()
 # -------------------------------
 # Model
 # -------------------------------
-model = ChatOllama(model="llama3.2:3b")
-
-
-
+# model = ChatOllama(model="llama3.2:3b")
+model = ChatGoogleGenerativeAI(
+    model="gemini-3-pro-preview")
 # -------------------------------
 # Tools
 # -------------------------------
@@ -97,7 +98,7 @@ agent = create_agent(
 # Request / Response Models
 # -------------------------------
 class CryptoRequest(BaseModel):
-    user_id: str
+    user_id:str
     coin_list: List[str]
 
 

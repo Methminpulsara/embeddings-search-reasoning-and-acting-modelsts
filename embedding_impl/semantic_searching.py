@@ -19,7 +19,6 @@ sentence_vectors = embeddings.embed_documents(documents)
 print(sentence_vectors[0])
 print("length of vectors", len(sentence_vectors[0]))
 
-
 def semantic_searching(search_query, top_k2=5):
     # methna krnne api dena search text ekth vectors widiyata harawa gnnw
     search_query_vector = embeddings.embed_query(search_query)  # creating query vector
