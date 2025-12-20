@@ -1,6 +1,10 @@
 # pip install -qU langchain-pinecone
 import os
+from langchain.agents.middleware import HumanInTheLoopMiddleware
+from langgraph.checkpoint.memory import InMemorySaver
 
+from aiohttp.web_middlewares import middleware
+from langchain.agents.middleware import HumanInTheLoopMiddleware
 from langchain_pinecone import PineconeVectorStore
 from pinecone import Pinecone
 
@@ -20,20 +24,24 @@ from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from pydantic import BaseModel
-
+from typing import Optional
 from fastapi import FastAPI
 
 app = FastAPI(description="AI Agent for hr Rag System with Vector DATABASE")
 
 
 class Request(BaseModel):
+
     question: str
+    thread_id: str
 
 
 class Responese(BaseModel):
     question: str
     anwser: str
     status: str
+    thread_id:str
+    message : Optional[str] = None
 
 
 checkpointer = InMemorySaver()
@@ -151,20 +159,64 @@ agent = create_agent(model=model,
                             You have access to a tool that retrieves context from hr Use the tool to help to anwser the Questions.,
                             You have also access to a tool wich 
                             
-                            """
+                            """,
+                     checkpointer=checkpointer,
+                     middleware=[HumanInTheLoopMiddleware(
+                         interrupt_on={
+                             "retrieve_context":False,
+                             "enhance_query_user_query": False,
+                             "write_result_to_file":False
+                         }
+                     )]
                      )
 
 
 @app.post("/quary", response_model=Responese)
 def query(req: Request):
-    resp = agent.invoke({
-        "messages": [{"role": "user", "content": req.question}]
-    })
 
-    return Responese(question=req.question,
-                     anwser=resp["messages"][-1].content,
-                     status="success"
-                     )
+    config ={"configurable": {"theread_id ": req.thread_id}}
+
+    try:
+        resp = agent.invoke(
+            {"messages": [{"role": "user", "content": req.question}]},
+            config=config
+        )
+
+        final_answer = resp["messages"][-1].content
+
+        return Responese(
+            question=req.question,
+            anwser=final_answer,
+            status="success",
+            thread_id=req.thread_id
+        )
+    except Exception as e:
+        # Return the error message in the 'message' field
+        return e
+
+
+class ApproveRequest(BaseModel):
+    thread_id : str
+    decision : str
+
+from langgraph.types import Command
+@app.post('/approve')
+def approve_and_continue(request:ApproveRequest):
+
+    config ={"configurable": {"theread_id ": request.thread_id}}
+
+    result = agent.invoke(
+        Command(
+            resume ={"decisions": [{"type" :request.decision}]}
+        ),config
+    )
+
+    anwser = result["messages"][-1].content if result.get("messages") else "No Anwser"
+    return anwser
+
+
+
+
 
 
 # FILE ek hadenne nththte MODEL eke performence madhi nisa api key ekk gnn onh ekh nisa mekt

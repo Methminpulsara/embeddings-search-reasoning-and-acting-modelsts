@@ -46,7 +46,7 @@ def retrieve_context(user_query: str):
     print(retrived_doc)
 
     contet = "\n\n".join(
-        (f"Source : {doc.metadata} \n Content : {doc.page_content}")
+        f"Source : {doc.metadata} \n Content : {doc.page_content}"
         for doc in retrived_doc
     )
     return contet
